@@ -57,7 +57,7 @@ must be specified according to its expected type.
 Single value options are specified by lines of the form
 .BR "option: value" .
 Options expecting list must be specified in a multi-line
-format as shown here 
+format as shown here
 where the lines specifying values are indented by any
 kind of whitespace even if only one value is being specified.
 .br
@@ -122,7 +122,7 @@ each specification will override the ones before.
 Boolean values need to specified as
 .B 1
 or
-.B 0 
+.B 0
 or may be specified using
 .B SET
 or
@@ -220,6 +220,17 @@ This may need to be unset when doing backups of where the
 client OS uses device numbers or types unsupported by the
 server OSs or where the presence of device nodes in the
 vault present a security issue.
+
+.TP
+.Br include: (L)
+Specify a filename patterns to include.
+
+Patterns are based on shell glob with some
+enhancements.
+
+.See rsync(1)
+
+.multiple include
 
 .TP
 .Br exclude: (L)
@@ -388,7 +399,7 @@ This is not useful for remote shell passwords.
 Preserve file permissions.  If this is unset permissions
 will not be checked or preserved.
 
-With rsync version 2.5.6 
+With rsync version 2.5.6
 not preserving permissions will break the linking.  Only
 unset this if you are running a later version of rsync.
 
@@ -589,7 +600,7 @@ otherwise the transfer will be done through a remote shell process.
 The optional
 .I alias
 specifies the path that should appear in the index
-so 
+so
 .B dirvish\-locate
 will report paths consistant with  common usage.
 This can help reduce confusion when dealing with users

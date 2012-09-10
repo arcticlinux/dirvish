@@ -128,7 +128,7 @@ sub usage
 	print STDERR <<EOUSAGE;
 USAGE
 	dirvish --vault vault OPTIONS [ file_list ]
-	
+
 OPTIONS
 	--image image_name
 	--config configfile
@@ -144,7 +144,7 @@ EOUSAGE
 	exit 255;
 }
 
-$Options = { 
+$Options = {
 	'Command-Args'	=> join(' ', @ARGV),
 	'numeric-ids'	=> 1,
 	'devices'	=> 1,
@@ -233,6 +233,7 @@ GetOptions($Options, qw(
 	expire=s
 	branch=s
 	reference=s
+	include=s@
 	exclude=s@
 	sparse!
 	zxfer!
@@ -427,6 +428,7 @@ $err_temp = join("/", $vault, $image, 'rsync_error.tmp');
 $err_file = join("/", $vault, $image, 'rsync_error');
 $log_file = join("/", $vault, $image, 'log');
 $log_temp = join("/", $vault, $image, 'log.tmp');
+$inc_file = join("/", $vault, $image, 'include');
 $exl_file = join("/", $vault, $image, 'exclude');
 $fsb_file = join("/", $vault, $image, 'fsbuffer');
 
@@ -446,6 +448,9 @@ $$Options{'speed-limit'}
 scalar @{$$Options{'rsync-option'}}
 	and push @rsyncargs, @{$$Options{'rsync-option'}};
 
+scalar @{$$Options{include}}
+	and push @rsyncargs, '--include-from=' . $inc_file;
+
 scalar @{$$Options{exclude}}
 	and push @rsyncargs, '--exclude-from=' . $exl_file;
 
@@ -456,7 +461,7 @@ if (!$$Options{'no-run'})
 	mkdir $destree, 0755;
 
 	open(SUMMARY, ">$vault/$image/summary")
-		or seppuku 231, "cannot create $vault/$image/summary"; 
+		or seppuku 231, "cannot create $vault/$image/summary";
 } else {
 	open(SUMMARY, ">-");
 }
@@ -474,6 +479,7 @@ for (@BOOLEAN_FIELDS)
 	Server Bank vault branch
        	Image image-temp Reference
 	Image-now Expire Expire-rule
+	include
 	exclude
 	rsync-option
 	Enabled
@@ -544,13 +550,24 @@ $WRAPPER_ENV = sprintf (" %s=%s" x 5,
 		$$Options{Image}),
 );
 
+if(scalar @{$$Options{include}})
+{
+	open(INCLUDE, ">$inc_file");
+	for (@{$$Options{include}})
+	{
+		print INCLUDE $_, "\n";
+	}
+	close(INCLUDE);
+	$ENV{DIRVISH_INCLUDE} = $inc_file;
+}
+
 if(scalar @{$$Options{exclude}})
 {
 	open(EXCLUDE, ">$exl_file");
 	for (@{$$Options{exclude}})
 	{
 		print EXCLUDE $_, "\n";
-	}	
+	}
 	close(EXCLUDE);
 	$ENV{DIRVISH_EXCLUDE} = $exl_file;
 }
@@ -668,6 +685,7 @@ for ($runloops = 0; $runloops < 5; ++$runloops)
 	}
 }
 
+scalar @{$$Options{include}} && unlink $inc_file;
 scalar @{$$Options{exclude}} && unlink $exl_file;
 -f $fsb_file and unlink $fsb_file;
 
@@ -807,7 +825,7 @@ $$Options{log} =~ /.*(gzip)|(bzip2)/
 
 if ($$Options{index} && $$Options{index} !~/^no/i)
 {
-	
+
 	open(INDEX, ">$vault/$image/index");
 	open(FIND, "find $destree -ls|") or seppuku 21, "dirvish $vault:$image cannot build index";
 	while (<FIND>)
@@ -866,7 +884,7 @@ sub errorscan
 		print ERR_FILE $_, "\n";
 
 		$$status{code} or next;
-		
+
 		for $action (@erraction)
 		{
 			($severity, $pattern, $message) = @$action;
